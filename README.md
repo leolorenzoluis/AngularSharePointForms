@@ -1,4 +1,4 @@
-# Angular SharePoint Forms
+# Angular SharePoint 2010 Forms
 Inspired by [ShockoutForms](https://github.com/jbonfardeci/ShockoutForms), SharePoint 2010 Angular Forms.
 
 ```
