@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Angular Material style sheet -->
+    <link rel="stylesheet" href="/Style%20Library/Pyramidion/styles/angular-material.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <style>
+        md-input-container .md-errors-spacer {
+            min-height: 0;
+        }
+
+        .validation-messages {
+            font-size: 12px;
+            color: #dd2c00;
+        }
+
+        .red {
+            color: #F44336;
+        }
+
+        .green {
+            color: #4CAF50;
+        }
+
+        .hint {
+            /* Position the hint */
+            position: relative;
+            /* Copy styles from ng-messages */
+            font-size: 12px;
+            line-height: 14px;
+            /* Set our own color */
+            color: grey;
+        }
+
+        .ribbon {
+            width: 100%;
+            height: 300px;
+            background-color: #0097a7;
+            -webkit-flex-shrink: 0;
+            -ms-flex-negative: 0;
+            flex-shrink: 0;
+        }
+        /*md-content.md-docs-dark-theme{
+            background-color: #0097a7 !important
+        }*/
+
+        .main {
+            margin-top: -209px;
+            -webkit-flex-shrink: 0;
+            -ms-flex-negative: 0;
+            flex-shrink: 0;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+            width: calc(100% - 16px);
+        }
+
+        .main-content {
+            border-radius: 2px;
+            padding: 80px 25px;
+        }
+
+        md-checkbox ._md-label {
+            top: 25%;
+        }
+
+        md-checkbox ._md-container {
+            top: 40%;
+        }
+
+        .md-datepicker-input-container {
+            width: 200px;
+        }
+        /*md-icon.align-icons {
+            padding-bottom: 20px;
+        }*/
+
+        @media print {
+            .ribbon {
+                display: none;
+            }
+            .main {
+                margin: auto;
+                -webkit-flex-shrink: 0;
+                -ms-flex-negative: 0;
+                flex-shrink: 0;
+                width: calc(100% - 16px);
+            }
+            button,
+            .hint,
+            .md-button.md-icon-button {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body ng-app="app.CheckRequest" ng-cloak>
+
+    <form ng-controller="CheckRequestController as vm" name="requestForm" novalidate>
+        <div layout="column" ng-cloak class="md-inline-form">
+            <div class="ribbon">
+                <div layout="row" layout-align="start center" style="color:white !important; padding-top: 10px">
+                    <md-button class="md-icon-button md-primary" ng-href="/Requests/Pages/Check.aspx">
+                        <md-tooltip>
+                            Check Request Home
+                        </md-tooltip>
+                        <md-icon md-svg-icon="/Requests/PublishingImages/ic_arrow_back_white_24px.svg"></md-icon>
+                    </md-button>
+                    <label style="font:500 24px Roboto,RobotoDraft,Helvetica,Arial,sans-serif">Check Request</label>
+                    <span flex></span>
+                    <md-button ng-click="vm.print()" class="md-icon-button">
+                        <md-icon md-svg-icon="/Requests/PublishingImages/ic_print_white_24px.svg">
+                        </md-icon>
+                        <md-tooltip>
+                            Print
+                        </md-tooltip>
+                    </md-button>
+                    <md-button class="md-raised" type="submit" style="color: #0097a7" ng-click="vm.saveListItem(false)" ng-if="vm.RequestStatus != 'Approved' && vm.CreatedByCurrentUser">
+                        <md-tooltip>
+                            Save
+                        </md-tooltip>Save</md-button>
+                    <md-button class="md-raised" type="submit" ng-click="vm.saveListItem(true) " style="color: #0097a7" ng-if="vm.RequestStatus != 'Approved'">
+                        <md-tooltip>
+                            Submit
+                        </md-tooltip>Submit</md-button>
+                </div>
+            </div>
+
+            <md-content md-whiteframe="4" class="main">
+                <md-content md-theme="docs-dark" layout-padding>
+                    <div layout="row">
+                        <md-input-container flex>
+                            <label>Check Request Type</label>
+                            <md-select name="checkType"  ng-model="vm.CheckRequestType" ng-required="true" ng-disabled="vm.ReadOnly">
+                                <md-option ng-repeat="type in vm.checkRequestTypes" value="{{type.value}}">{{type.display}}</md-option>
+                            </md-select>
+                            <div ng-messages="requestForm.checkType.$error">
+                                <div ng-message="required">Check Request Type is required.</div>
+                            </div>
+                        </md-input-container>
+                        <span flex="5"></span>
+                        <md-autocomplete flex required md-input-name="departmentManagerAutoComplete" md-input-minlength="1" md-input-maxlength="18"
+                            md-no-cache="vm.noCache" md-selected-item="vm.DepartmentManager" md-search-text="vm.CurrentDepartmentManagerSearchText"
+                            md-items="item in vm.querySearch(vm.CurrentDepartmentManagerSearchText)" md-item-text="item.display"
+                            md-floating-label="Department Manager" ng-disabled="vm.ReadOnly" md-search-text-change="vm.peopleSearchTextChanged(vm.CurrentDepartmentManagerSearchText)">
+                            <md-item-template>
+                                <span md-highlight-text="vm.CurrentDepartmentManagerSearchText " md-highlight-flags="^i ">{{item.display}}</span>
+                            </md-item-template>
+                            <div ng-messages="requestForm.departmentManagerAutoComplete.$error " ng-if="requestForm.$submitted
+                            || requestForm.departmentManagerAutoComplete.$touched ">
+                                <div ng-message="required ">You <b>must</b> have a department manager value.</div>
+                                <div ng-message="minlength ">Your entry is not long enough.</div>
+                                <div ng-message="maxlength ">Your entry is too long.</div>
+                            </div>
+                        </md-autocomplete>
+                    </div>
+
+                    <div layout="row">
+
+                        <md-input-container class="md-block" flex>
+                            <label>Pay To</label>
+                            <input ng-model="vm.PayTo" name="payTo" ng-required="true" ng-disabled="vm.ReadOnly">
+                            <div ng-messages="requestForm.payTo.$error">
+                                <div ng-message="required">Pay To is required.</div>
+                            </div>
+                        </md-input-container>
+                        <div flex="5" hide-xs hide-sm>
+                            <!-- Spacer //-->
+                        </div>
+                        <md-input-container class="md-block" flex>
+                            <label>Purchase Order #</label>
+                            <input ng-model="vm.PO" name="purchaseOrder" ng-required="true" ng-disabled="vm.ReadOnly">
+                            <div ng-messages="requestForm.purchaseOrder.$error">
+                                <div ng-message="required">Purchase Order is required.</div>
+                            </div>
+                        </md-input-container>
+
+                    </div>
+                    <div layout="row">
+
+                        <md-input-container class="md-block" flex>
+                            <label>Vendor</label>
+                            <input ng-model="vm.Vendor" name="vendor" ng-disabled="vm.ReadOnly">
+                            <div ng-messages="requestForm.vendor.$error">
+                                <div ng-message="required">Vendor is required.</div>
+                            </div>
+                        </md-input-container>
+                        <div flex="5" hide-xs hide-sm>
+                            <!-- Spacer //-->
+                        </div>
+
+
+                        <md-input-container class="md-block" flex>
+                            <label>Address</label>
+                            <textarea ng-model="vm.Address" name="address" required md-maxlength="150" rows="3" md-select-on-focus ng-disabled="vm.ReadOnly"></textarea>
+                            <div ng-messages="requestForm.payTo.$error">
+                                <div ng-message="required">Address is required.</div>
+                            </div>
+                        </md-input-container>
+
+                    </div>
+                </md-content>
+                <md-content>
+                    <div layout="row" layout-align="end none">
+                        <md-button class="md-primary" ng-click="vm.addItem()" aria-label="Add item" ng-if="!vm.ReadOnly">
+                            Add item
+                        </md-button>
+                    </div>
+                </md-content>
+                <md-content layout-padding>
+                    <div layout-wrap layout="row ">
+                        <label style="text-align:center " flex="75">Description</label>
+                        <label style="text-align:center " flex="25">Amount</label>
+                    </div>
+                    <div layout="row" ng-repeat="item in vm.items" ng-controller="ItemsController as itemCtrl">
+                        <div flex style="display:flex;">
+                            <md-input-container class="md-block" flex="75">
+                                <input ng-model="item.description" name="description" ng-required="true" ng-disabled="itemCtrl.ReadOnly" aria-label="Description">
+                                <div ng-messages="requestForm.description.$error">
+                                    <div ng-message="required">Description is required.</div>
+                                </div>
+                            </md-input-container>
+                            <md-input-container class="md-block" flex="25">
+                                <md-icon> attach_money </md-icon>
+                                <input ng-model="item.amount" name="amount" type="number" ng-required="true" ng-disabled="itemCtrl.ReadOnly" aria-label="Amount">
+                                <div ng-messages="requestForm.amount.$error">
+                                    <div ng-message="required">Amount is required.</div>
+                                    <div ng-message="number">Amount is invalid number.</div>
+                                </div>
+                            </md-input-container>
+                            <md-button class="md-icon-button md-primary" ng-href="/Requests/Pages/Check.aspx" ng-click="vm.deleteItem($index)" ng-show="!vm.ReadOnly">
+                                <md-tooltip>
+                                    Delete
+                                </md-tooltip>
+                                <md-icon>delete</md-icon>
+                            </md-button>
+                        </div>
+                    </div>
+
+                    <div layout="row">
+
+                        <div flex="75"></div>
+                        <div flex="25">
+                            <md-input-container class="md-block">
+                                <label>Total</label>
+                                <md-icon> attach_money </md-icon>
+                                <input ng-model="vm.TotalAmount" name="amount" type="number" ng-disabled="true">
+                            </md-input-container>
+                        </div>
+                    </div>
+                    <div layout="row">
+                        <md-input-container class="md-block" flex>
+                            <label>Additional Instructions</label>
+                            <textarea ng-model="vm.AdditionalInstructions" md-maxlength="150" rows="3" ng-disabled="vm.ReadOnly"></textarea>
+                        </md-input-container>
+                    </div>
+                </md-content>
+
+                <md-content md-theme="docs-dark" layout-padding ng-show="vm.ReadOnly">
+                    <div layout="row" layout-align="end none">
+                        <div>
+                            Department Manager Approval
+                            <md-switch ng-model="vm.IsDepartmentManagerApproved" ng-true-value="'Approved'" ng-false-value="'Rejected'" aria-label="Department Manager Approval"
+                                ng-disabled="vm.DisableDepartmentManagerApproval || !vm.IAmDepartmentManagerApprover">
+                                Approval Status: <span ng-class="{red: vm.IsDepartmentManagerApproved === 'Rejected', green: vm.IsDepartmentManagerApproved === 'Approved'}">{{ vm.IsDepartmentManagerApproved }}</span>
+                            </md-switch>
+                            <md-input-container class="md-block">
+                                <label>Comments</label>
+                                <textarea ng-model="vm.DepartmentManagerApproverComments" md-maxlength="150" rows="3" md-select-on-focus ng-disabled="vm.DisableDepartmentManagerApproval || !vm.IAmDepartmentManagerApprover"></textarea>
+                            </md-input-container>
+                        </div>
+                        <span layout-padding></span>
+                        <div ng-if="vm.TotalAmount >= 1000 && vm.DisableDepartmentManagerApproval">
+                            C Suite Approval
+                            <md-switch ng-model="vm.IsCSuiteApproved" ng-true-value="'Approved'" ng-false-value="'Rejected'" aria-label="C Suite Approval"
+                                ng-disabled="vm.DisableCSuiteApproval || !vm.IAmCSuite">
+                                Approval Status: <span ng-class="{red: vm.IsCSuiteApproved === 'Rejected', green: vm.IsCSuiteApproved === 'Approved'}">{{ vm.IsCSuiteApproved }}</span>
+                            </md-switch>
+                            <md-input-container class="md-block">
+                                <label>Comments</label>
+                                <textarea ng-model="vm.CSuiteApproverComments" md-maxlength="150" rows="3" md-select-on-focus ng-disabled="vm.DisableCSuiteApproval || !vm.IAmCSuite"></textarea>
+                            </md-input-container>
+                        </div>
+                    </div>
+                </md-content>
+
+                <md-content layout-padding >
+                    <div layout="row" layout-align="end none">
+                        <md-button class="md-raised md-primary" type="submit" ng-click="vm.saveListItem(false)"  ng-if="vm.RequestStatus != 'Approved' && vm.CreatedByCurrentUser">
+                            <md-tooltip>
+                                Save
+                            </md-tooltip>Save</md-button>
+                        <md-button class="md-raised md-primary" type="submit" ng-click="vm.saveListItem(true) "  ng-if="vm.RequestStatus != 'Approved'">
+                            <md-tooltip>
+                                Submit a workflow that triggers a workflow
+                            </md-tooltip>Submit</md-button>
+                    </div>
+                </md-content>
+                <md-content layout-padding style="padding:0 25 35 25" ng-show="vm.workflowHistory.length> 0">
+
+                    <div layout="row ">
+                        <md-button ng-href="{{vm.WorkflowStatusUrl}}" target="_blank">
+                            <h1 flex class="md-headline" style="color:#da6929">Workflow History</h1></md-button>
+                    </div>
+                    <div layout="row">
+                        <bold flex="75" class="md-title" style="text-align:center">Description</bold>
+                        <bold flex="25" class="md-title" style="text-align:center">Date Occurred</bold>
+                    </div>
+                    <md-divider></md-divider>
+                    <div ng-repeat="item in vm.workflowHistory" layout="row">
+                        <label class="md-body-1" flex="75">{{ item.Description }}</label>
+                        <label class="md-body-1" flex="25" style="text-align:center">{{ item.DateOccurred }}</label>
+                    </div>
+                </md-content>
+            </md-content>
+        </div>
+    </form>
+    <!-- Angular Material requires Angular.js Libraries -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular.js">
+
+    </script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-animate.min.js">
+
+    </script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-aria.min.js">
+
+    </script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-messages.min.js">
+
+    </script>
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+        crossorigin="anonymous">
+
+    </script>
+
+    <!-- Angular Material Library -->
+    <!--<script src="https://cdn.gitcdn.link/cdn/angular/bower-material/v1.1.0-rc.5/angular-material.js">-->
+    <script src="/scripts/angular-material.js">
+
+    </script>
+    <script src="/scripts/materialformutility.js"></script>
+    <script src="/scripts/spsoap.js"></script>
+    <script src="/sprest.js"></script>
+    <script src="/scripts/materialform.js"></script>
+    <!-- Your application bootstrap  -->
+    <script type="text/javascript">
+        (function() {
+    angular
+    .module('app.CheckRequest', ['app.Utility', 'app.MaterialForm',  'app.SPRest', 'ngMaterial', 'ngMessages'])
+    .controller('CheckRequestController', CheckRequestController)
+    .controller('ItemsController', ItemsController)
+    .config(function($mdThemingProvider) {
+    $mdThemingProvider.theme('default')
+    .primaryPalette('deep-orange')
+    .accentPalette('pink');
+
+    $mdThemingProvider.theme('docs-dark', 'default')
+      .primaryPalette('yellow')
+      .dark();
+  });
+
+  function ItemsController($scope) {
+      var itemCtrl = this;
+      itemCtrl.ReadOnly = $scope.$parent.$parent.vm.ReadOnly;
+      $scope.$watch("item.amount", function amountChanged(newValue,oldValue) {
+          $scope.$parent.$parent.vm.calculateTotal();
+      });
+  }
+
+  function CheckRequestController(MaterialForm, $http, $q, $scope, SPSoap, $mdToast) {
+        var last = {
+                    bottom: false,
+                    top: true,
+                    left: false,
+                    right: true
+                    };
+        $scope.toastPosition = angular.extend({},last);
+        $scope.getToastPosition = function() {
+            sanitizePosition();
+            return Object.keys($scope.toastPosition)
+            .filter(function(pos) { return $scope.toastPosition[pos]; })
+            .join(' ');
+        };
+
+        function sanitizePosition() {
+            var current = $scope.toastPosition;
+            if ( current.bottom && last.top ) current.top = false;
+            if ( current.top && last.bottom ) current.bottom = false;
+            if ( current.right && last.left ) current.left = false;
+            if ( current.left && last.right ) current.right = false;
+            last = angular.extend({},current);
+        }
+
+        var vm = this;
+        vm.querySearch = querySearch;
+        vm.deleteItem = function(index) {
+            vm.items.splice(index,1);
+            vm.calculateTotal();
+        }
+        vm.calculateTotal = function calculateTotal() {
+            vm.TotalAmount = 0;
+            angular.forEach(vm.items, function(value, key) {
+                vm.TotalAmount += value.amount;
+            });
+        }
+        vm.selectedEmployeeChange = function(employee) {
+            if(!vm.ReadOnly && !vm.FromDepartment){
+                vm.fromDepartmentSearchText = null;
+                vm.fromLocationSearchText = null;
+                vm.fromPromotionSearchText = null;
+            }
+            if(employee) {
+                SPSoap.getUserInformation(employee.value.split(';')[0]).
+                then(function success(value) {
+                    vm.FromDepartment = value.department;
+                    vm.FromLocation = value.location;
+                    vm.FromPromotion = value.jobtitle;
+                })
+            }
+        }
+        vm.peopleSearchTextChanged = function(query) {
+            SPSoap.searchPrincipals(query, function(data) {
+                $.map(data, function(item) {
+                    var person = {
+                            display: item.DisplayName,
+                            value: item.UserInfoID + ';#' + item.AccountName
+                        };
+                    if(query.toLowerCase() == item.DisplayName.toLowerCase())
+                        vm.DepartmentManager = person;
+                });
+            });
+        }
+        vm.TotalAmount = 0;
+        vm.addItem = function() {
+            var item = {description:"",amount:0};
+            vm.items.push(item);
+            vm.TotalAmount += item.amount;
+        }
+        vm.print = print;
+
+        SPSoap.getUsersInGroup("CEO")
+            .then(function success(value) {
+                vm.CSuiteApproverEmail = value[0].email;
+            });
+
+        MaterialForm.createForm({
+                                formId: 'formid',
+                                siteUrl: '/Requests',
+                                listName: 'Check Requests',
+                                workflowHistoryListName: 'Workflow History',
+                                debug: true,
+                                vm: vm,
+                            })
+                        .then(function() {
+                            /* Post Render */
+                            if(vm.Items){
+                                vm.items = [];
+                                var items = JSON.parse(vm.Items);
+                                angular.forEach(items, function(value, key) {
+                                    vm.items.push({description:value.description, amount: value.amount});
+                                });
+                            }
+                            else {
+                                vm.items = [{
+                                    description: null,
+                                    amount:null,
+                                }];
+                            }
+                            DisableApprovalSection();
+                            vm.checkRequestTypes = createOptions(MaterialForm.fields.CheckRequestType.options);
+                            vm.ReadOnly = vm.RequestStatus === "Submitted" || vm.RequestStatus === "Approved";
+                        });
+
+
+        function DisableApprovalSection() {
+            for(var j=0;j<MaterialForm.currentUser.groups.length;j++) {
+                if(MaterialForm.currentUser.groups[j].name === "CEO") {
+                    vm.IAmCSuite = true;
+                    break;
+                }
+            }
+            vm.IAmDepartmentManagerApprover = vm.DepartmentManagerId === MaterialForm.currentUser.id;
+
+            if(vm.IsDepartmentManagerApproved === "None") {
+                vm.IsDepartmentManagerApproved = null;
+            }
+            if(vm.IsCSuiteApproved === "None") {
+                vm.IsCSuiteApproved = null;
+            }
+            vm.DisableDepartmentManagerApproval = vm.IsDepartmentManagerApproved !== null;
+            if(vm.DisableDepartmentManagerApproval) {
+                vm.DisableCSuiteApproval = vm.IsCSuiteApproved !== null;
+            }
+        }
+
+
+        function createOptions(options) {
+            return options.map(function (option) {
+                var display = option === "Payroll" ? " (severance, bonus)" : " (vendors)";
+                return {
+                    value: option,
+                    display: option + display
+                };
+            });
+        }
+
+        function print() {
+            window.print();
+        }
+
+        function querySearch(query) {
+            var deferred = $q.defer();
+            var results = query ? SPSoap.searchPrincipals(query, function(data) {
+                deferred.resolve($.map(data, function(item) {
+                    return {
+                        display: item.DisplayName,
+                        value: item.UserInfoID + ';#' + item.AccountName
+                    };
+                }));
+            }, 10, 'User') : []
+            return deferred.promise;
+        }
+
+        /**
+         * Create filter function for a query string
+         */
+        function createFilterFor(query) {
+            var lowercaseQuery = angular.lowercase(query);
+            return function filterFn(item) {
+                return ( item.value.indexOf(lowercaseQuery) === 0) ;
+            }
+        }
+
+        vm.saveListItem = function(isSubmit) {
+            if(!$scope.requestForm.$valid) {
+                for(var key in $scope.requestForm.$error.required){
+                    console.log('error = ' +$scope.requestForm.$error.required[key].$name);
+                }
+                for(var key in $scope.requestForm.$error.number){
+                    console.log('error = ' +$scope.requestForm.$error.number[key].$name);
+                }
+                 return;
+            }
+
+            var fields = [];
+            fields.push(['Title', MaterialForm.currentUser.title + ' Check Request']);
+            fields.push(['CheckRequestType', vm.CheckRequestType]);
+            fields.push(['CheckVendor', vm.Vendor]);
+            fields.push(['CheckPurchaseOrderNumber', vm.PO]);
+            fields.push(['CheckPayTo', vm.PayTo]);
+            fields.push(['WorkAddress', vm.Address]);
+            fields.push(['TotalAmount', vm.TotalAmount]);
+            fields.push(['IsDepartmentManagerApproved', vm.IsDepartmentManagerApproved]);
+            fields.push(['DepartmentManagerApproverComments', vm.DepartmentManagerApproverComments]);
+            fields.push(['IsCSuiteApproved', vm.IsCSuiteApproved]);
+            fields.push(['CSuiteApproverComments', vm.CSuiteApproverComments]);
+            fields.push(['Items', JSON.stringify(vm.items)]);
+            fields.push(['AdditionalInstructions', vm.AdditionalInstructions]);
+            fields.push(['DepartmentManager', vm.DepartmentManager.value]);
+
+            MaterialForm.saveListItem(isSubmit, fields);
+
+            var pinTo = $scope.getToastPosition();
+            var toastText = 'Your request has been saved!';
+            if(isSubmit){
+                toastText = 'Your request has been submitted!'
+            }
+            var pinTo = $scope.getToastPosition();
+                $mdToast.show(
+                $mdToast.simple()
+                    .textContent(toastText)
+                    .position(pinTo)
+                    .hideDelay(3000)
+                ).then(function() {
+                    if(isSubmit){
+                        vm.ReadOnly = true;
+                        window.location = "/Requests/Pages/Check.aspx";
+                    }
+                });
+        }
+    }
+})();
+    </script>
+</body>
+
+</html>
